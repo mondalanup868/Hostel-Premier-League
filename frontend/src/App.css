@@ -36,3 +36,35 @@
     transform: rotate(360deg);
   }
 }
+/* Slide from left animation */
+@keyframes slideLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Slide from right animation */
+@keyframes slideRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Apply the animation */
+.animate-slide-left {
+  animation: slideLeft 1.5s ease forwards;
+}
+
+.animate-slide-right {
+  animation: slideRight 1.5s ease forwards;
+}
