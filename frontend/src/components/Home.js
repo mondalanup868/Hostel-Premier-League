@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
-import FreeFire from '../components/FreeFire';
-import Bgmi from '../components/Bgmi';
-import BgHome from '../assets/bg.jpg';
-import { Link } from 'react-router-dom';
-import SoloReg from '../components/SoloReg'
+import BgImg from '../assets/loginBg.jpg';
+import FreeFireCard from './FreeFireCard';
+import BgmiCard from './BgmiCard';
 
 function Home() {
   const [animation, setAnimation] = useState(false);
@@ -15,21 +13,19 @@ function Home() {
 
   return (
     <div
-      className='relative min-h-screen bg-center overflow-hidden'
-      style={{ backgroundImage: `url(${BgHome})` }}
+      className='relative md:h-screen md:bg-center bg-cover bg-no-repeat'
+      style={{
+        backgroundImage: `url(${BgImg})`,
+      }}
     >
       <Navbar />
       <h1 className='text-center font-bold text-4xl p-10 text-white'>Select Your Game Type</h1>
-      <div className='flex flex-row justify-center gap-20 mt-10'>
-        <Link to='/home/soloFF'
-          className={`transition-transform duration-1000 ${animation ? 'animate-slide-left' : ''}`}
-        >
-          <FreeFire />
-        </Link>
-        <div
-          className={`transition-transform duration-1000 ${animation ? 'animate-slide-right' : ''}`}
-        >
-          <Bgmi />
+      <div className='flex flex-col md:flex-row justify-center items-center gap-6 md:gap-24'>
+        <div className='w-4/5 sm:w-3/5 md:w-1/4 lg:w-1/6'>
+          <FreeFireCard />
+        </div>
+        <div className='w-4/5 sm:w-3/5 md:w-1/4 lg:w-1/6'>
+          <BgmiCard />
         </div>
       </div>
     </div>
