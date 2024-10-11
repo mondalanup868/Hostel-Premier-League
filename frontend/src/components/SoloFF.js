@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 
 const registerURL = `${process.env.REACT_APP_SERVER_URL}/users/user-register`;
-const uidNameFetch = `https://free-ff-api-src-5plp.onrender.com/api/v1/account?region=IND&uid=`;
+const uidNameFetch = 'https://free-ff-api-src-5plp.onrender.com/api/v1/account?region=IND&uid=';
 
 function SoloFF() {
     const [playerGameName, setPlayerGameName] = useState('');
     const [playerEmail, setPlayerEmail] = useState('');
     const [playerContact, setPlayerContact] = useState('');
-    const [playerUID, setPlayerUID] = useState('');
-    const [playerUIDName, setUIDName] = useState('');
+   
+    
     const [collegeId, setCollegeId] = useState('');
     const [transactionMode, setTransactionMode] = useState('');
     const [transactionId, setTransactionId] = useState('');
@@ -38,36 +40,6 @@ function SoloFF() {
         return PID;
     }
 
-    const fetchPlayerGameName = async () => {
-        if (!playerUID) {
-            setError('Please enter your UID first.');
-            return;
-        }
-
-        try {
-            const response = await fetch(uidNameFetch + playerUID, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.status === 200) {
-                let uidName = result.basicInfo.nickname;
-                setUIDName(uidName);
-               
-                setError(''); 
-            } else {
-                setError(result.message || 'Failed to fetch UID name.');
-                console.error('Error fetching UID name:', result.message);
-            }
-        } catch (error) {
-            console.error('Error during UID fetch:', error);
-            setError('An error occurred while fetching UID name.');
-        }
-    };
 
     // Function to handle form submission
     const handleSubmit = async (e) => {
@@ -76,12 +48,12 @@ function SoloFF() {
         // Check if transaction ID and confirm transaction ID match
         if (transactionId !== confirmTransactionId) {
             setError('Both Transaction IDs are not the same. Please enter a valid ID.');
+            toast.error('Both Transaction IDs are not the same.');
             return;
         }
 
         setError('');
 
-        
         const data = {
             PID: generatePID(),
             gameName: 'FREEFIRE',
@@ -90,8 +62,12 @@ function SoloFF() {
             names: [playerGameName],
             emails: [playerEmail],
             contacts: [playerContact],
-            uids: [playerUID],
-            uidNames: [playerUIDName],
+            uids: [
+                e.target.player_UID.value,
+            ],
+            uidNames: [
+                e.target.uidName.value,
+            ],
             collegeNames: ['Dev Bhoomi Uttarakhand University'],
             collegeIds: [collegeId],
             transactionId,
@@ -111,17 +87,27 @@ function SoloFF() {
             const result = await response.json();
 
             if (response.ok) {
+                toast.success('Registration successful!');
                 console.log('Registration successful:', result);
-                
+
+                // Reset form fields after successful registration
+                setPlayerGameName('');
+                setPlayerEmail('');
+                setPlayerContact('');
+                setCollegeId('');
+                setTransactionMode('');
+                setTransactionId('');
+                setConfirmTransactionId('');
             } else {
                 setError(result.message || 'Registration failed.');
-                console.error('Registration failed:', result.message);
+                toast.error(result.message || 'Registration failed.');
             }
         } catch (error) {
-            console.error('Error during registration:', error);
             setError('An error occurred during registration.');
+            toast.error('An error occurred during registration.');
         }
     };
+
 
     return (
         <div>
@@ -199,24 +185,17 @@ function SoloFF() {
                                 {/* Player Game UID */}
                                 <div className="col-span-1 w-full">
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Player Game UID:</label>
-                                    <div className="flex">
+                                    
                                         <input
                                             type="text"
-                                            name="uid"
+                                            name="player_UID"
                                             className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                             placeholder="Enter your game UID"
                                             required
-                                            value={playerUID}
-                                            onChange={(e) => setPlayerUID(e.target.value)}
+                                            
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={fetchPlayerGameName}
-                                            className="ml-2 bg-purple-600 text-white font-medium rounded-lg px-4 py-2 text-sm"
-                                        >
-                                            Verify
-                                        </button>
-                                    </div>
+                                        
+                                    
                                 </div>
 
                                 {/* Player Game Name */}
@@ -227,8 +206,7 @@ function SoloFF() {
                                         name="uidName" // Update name if you want
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Your game name is..."
-                                        value={playerUIDName} 
-                                        readOnly 
+                                        required
                                     />
                                 </div>
 
@@ -246,22 +224,24 @@ function SoloFF() {
                                     />
                                 </div>
 
-                                {/* Transaction Mode */}
-                                <div className="col-span-1 w-full">
-                                    <label className="block mb-2 text-sm font-medium text-gray-900">Transaction Mode:</label>
-                                    <select
-                                        name="transactionMode"
-                                        className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
-                                        value={transactionMode}
-                                        onChange={handleTransactionModeChange}
-                                        required
-                                    >
-                                        <option value="">Select Payment Method</option>
-                                        <option value="CASH">CASH</option>
-                                        <option value="UPI">UPI</option>
-                                    </select>
-                                </div>
 
+                            </div>
+                            {/* Transaction Mode */}
+                            <div className="col-span-1 w-full">
+                                <label className="block mb-2 text-sm font-medium text-gray-900">Transaction Mode:</label>
+                                <select
+                                    name="transactionMode"
+                                    className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                                    value={transactionMode}
+                                    onChange={handleTransactionModeChange}
+                                    required
+                                >
+                                    <option value="">Select Payment Method</option>
+                                    <option value="CASH">CASH</option>
+                                    <option value="UPI">UPI</option>
+                                </select>
+                            </div>
+                            <div className='md:flex md:gap-4'>
                                 {/* Transaction ID */}
                                 <div className="col-span-1 w-full">
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Transaction ID:</label>
@@ -290,20 +270,21 @@ function SoloFF() {
                                         required
                                     />
                                 </div>
-
-                                {/* Error Message */}
-                                {error && (
-                                    <div className="col-span-1 w-full">
-                                        <p className="text-red-500">{error}</p>
-                                    </div>
-                                )}
                             </div>
 
-                            <button type="submit" className="text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
+                            {/* Error Message */}
+                            {error && (
+                                <div className="col-span-1 w-full">
+                                    <p className="text-red-500">{error}</p>
+                                </div>
+                            )}
+
+                            <button type="submit" className="my-4 w-full bg-purple-600 text-white font-medium rounded-lg px-4 py-4 text-xl ">Submit</button>
                         </form>
                     </div>
                 </div>
             </section>
+            <ToastContainer />
         </div>
     );
 }

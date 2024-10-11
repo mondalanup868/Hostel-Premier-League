@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 
+const registerURL = `${process.env.REACT_APP_SERVER_URL}/users/user-register`;
+
+
 function SoloBGMI() {
-    const [playerGameName, setPlayerGameName] = useState('');
     const [transactionMode, setTransactionMode] = useState('');
     const [transactionId, setTransactionId] = useState('');
     const [confirmTransactionId, setConfirmTransactionId] = useState('');
@@ -21,24 +25,80 @@ function SoloBGMI() {
         }
     };
 
-    // Placeholder function for fetching player name based on UID
-    const fetchPlayerGameName = () => {
-        setPlayerGameName('Fetched Player Name');
-    };
+    function generatePID() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let PID = '';
+        for (let i = 0; i < 8; i++) {
+            PID += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return PID;
+    }
+
+    
 
     // Function to handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); // Prevent default form submission
-
+    
         // Check if transaction ID and confirm transaction ID match
         if (transactionId !== confirmTransactionId) {
-            setError('Both Transaction IDs are not same Please enter the valid ID'); // Set error message
+          setError('Both Transaction IDs are not the same. Please enter a valid ID.');
+          toast.error('Both Transaction IDs are not the same. Please enter a valid ID.');
+          return; // Exit the function if validation fails
         } else {
-            setError(''); // Clear any previous error
-            // Proceed with registration
-            console.log('Registration successful!'); // Here, implement the actual registration logic
+          setError(''); // Clear any previous error
         }
-    };
+    
+        // Prepare the data object
+        const data = {
+          PID: generatePID(),
+          gameName: "BGMI",
+          gameMode: "SOLO",
+          teamName: "NONE",
+          names: [e.target.player_name.value],
+          emails: [e.target.player_email.value],
+          contacts: [e.target.player_contact.value],
+          uids: [e.target.player_UID.value],
+          uidNames: [e.target.uidName.value],
+          collegeNames: [e.target.player_collegeName.value],
+          collegeIds: [e.target.player_collegeId.value],
+          transactionId: transactionId,
+          transactionMode: transactionMode,
+        };
+    
+        try {
+          const response = await fetch(registerURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+    
+          const result = await response.json();
+    
+          if (response.ok) {
+            // Registration successful
+            toast.success('Registration successful!');
+    
+            // Reset form fields
+            e.target.reset();
+    
+            // Reset state variables
+            setTransactionId('');
+            setConfirmTransactionId('');
+            setTransactionMode('');
+          } else {
+            // Show error message
+            setError(result.message || 'Registration failed.');
+            toast.error(result.message || 'Registration failed.');
+          }
+        } catch (error) {
+          console.error('Error during registration:', error);
+          setError('An error occurred during registration.');
+          toast.error('An error occurred during registration.');
+        }
+      };
 
     return (
         <div>
@@ -54,6 +114,7 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Game Name:</label>
                                     <input
                                         type="text"
+                                        name = "gameName"
                                         className="bg-blue-50 border border-blue-300 text-green-500 text-sm rounded-lg w-full p-2.5"
                                         value="BGMI"
                                         readOnly
@@ -64,8 +125,9 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Game Mode:</label>
                                     <input
                                         type="text"
+                                        name = "gameMode"
                                         className="bg-blue-50 border border-blue-300 text-green-500 text-sm rounded-lg w-full p-2.5"
-                                        value="Solo"
+                                        value="SOLO"
                                         readOnly
                                     />
                                 </div>
@@ -74,11 +136,10 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Player Name:</label>
                                     <input
                                         type="text"
+                                        name="player_name"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Enter your name"
                                         required
-                                        value={playerGameName}
-                                        onChange={(e) => setPlayerGameName(e.target.value)}
                                     />
                                 </div>
 
@@ -87,9 +148,10 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Player Email:</label>
                                     <input
                                         type="email"
+                                        name="player_email"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Enter your email"
-                                        required
+                                        
                                     />
                                 </div>
 
@@ -97,7 +159,8 @@ function SoloBGMI() {
                                 <div className="col-span-1 w-full">
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Player Phone Number:</label>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        name="player_contact"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Enter your phone number"
                                         required
@@ -110,17 +173,13 @@ function SoloBGMI() {
                                     <div className="flex">
                                         <input
                                             type="text"
+                                            name="player_UID"
                                             className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                             placeholder="Enter your game UID"
                                             required
+                                            
+                                            
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={fetchPlayerGameName}
-                                            className="ml-2 bg-purple-600 text-white font-medium rounded-lg px-4 py-2 text-sm"
-                                        >
-                                            Verify
-                                        </button>
                                     </div>
                                 </div>
 
@@ -129,10 +188,9 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Player Game Name:</label>
                                     <input
                                         type="text"
+                                        name="uidName"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Your game name is..."
-                                        value={playerGameName}
-                                        onChange={(e) => setPlayerGameName(e.target.value)}
                                         required
                                     />
                                 </div>
@@ -142,6 +200,7 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">College Name:</label>
                                     <input
                                         type="text"
+                                        name="player_collegeName"
                                         className="bg-blue-50 border border-blue-300 text-green-500 text-sm rounded-lg w-full p-2.5"
                                         value="Dev Bhoomi Uttarakhand University"
                                         readOnly
@@ -153,6 +212,7 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">College ID:</label>
                                     <input
                                         type="text"
+                                        name = "player_collegeId"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder="Enter your college ID"
                                         required
@@ -180,6 +240,7 @@ function SoloBGMI() {
                                     <label className="block mb-2 text-sm font-medium text-gray-900">Transaction ID:</label>
                                     <input
                                         type="text"
+                                        name= "transactionId"
                                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                                         placeholder={transactionMode === 'CASH' ? 'NONE' : 'Enter your transaction ID'}
                                         value={transactionId}
@@ -217,6 +278,7 @@ function SoloBGMI() {
                     </div>
                 </div>
             </section>
+            <ToastContainer/>
         </div>
     );
 }

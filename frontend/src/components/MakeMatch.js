@@ -1,18 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
+
+const maxLevelFetch = `${process.env.REACT_APP_SERVER_URL}/matches/getMaxGRLevel`;
+const remainingURL = `${process.env.REACT_APP_SERVER_URL}/matches/getRemaining`;
+const makeMatchURL = `${process.env.REACT_APP_SERVER_URL}/matches/makeMatch`;
 
 function MakeMatch() {
     const [gameName, setGameName] = useState('');
     const [gameMode, setGameMode] = useState('');
-    const [gameRound, setGameRound] = useState('');
+    const [currentMatchRound, setcurrentMatchRound] = useState(''); // Maintain current round
     const [gameRoundLevel, setGameRoundLevel] = useState('');
-    const [customRoomID, setCustomRoomID] = useState('');
-    const [players, setPlayers] = useState([
-        { pid: 'F84UDFUI', name: 'Ayush Kothari', uid: '78784758485433', gameName: 'Ashu', contact: '6396979579', selected: false },
-        // Add more players here...
-    ]);
+    const [maxGRLevel, setMaxGRLevel] = useState(0); // Store max GRLevel
+    const [customId, setCustomRoomID] = useState('');
+    const [players, setPlayers] = useState([]); // Make this dynamic
 
-    const matchID = 'JDIE45SE'; // Example ID
+    // Fetch the max GRLevel when gameName and gameMode are selected
+    useEffect(() => {
+        const fetchMaxGRLevel = async () => {
+            if (gameName && gameMode) {
+                try {
+                    const response = await fetch(maxLevelFetch, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ gameName, gameMode })
+                    });
+                    const maxLevel = await response.json();
+                    setMaxGRLevel(maxLevel); // Set the max GRLevel
+                } catch (error) {
+                    console.error('Error fetching max GRLevel:', error);
+                }
+            }
+        };
+        fetchMaxGRLevel();
+    }, [gameName, gameMode]);
+
+    // Fetch remaining players when criteria are selected (gameName, gameMode, currentMatchRound)
+    useEffect(() => {
+        const fetchRemainingPlayers = async () => {
+            if (gameName && gameMode && currentMatchRound) {
+                try {
+                    const response = await fetch(remainingURL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            gameName,
+                            gameMode,
+                            GRLevel: Number(gameRoundLevel),
+                            currentMatchRound: Number(currentMatchRound)
+                        })
+                    });
+
+
+                    const playersData = await response.json();
+                    setPlayers(playersData); // Set players dynamically
+                } catch (error) {
+                    console.error('Error fetching remaining players:', error);
+                }
+            }
+        };
+        fetchRemainingPlayers();
+    }, [gameName, gameMode, gameRoundLevel, currentMatchRound]);
+
+    function generateMatchId() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let matchId = '';
+        for (let i = 0; i < 8; i++) {
+            matchId += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return matchId;
+    }
+
+    const matchId = generateMatchId(); // Example ID
 
     const handleSelectPlayer = (index) => {
         const updatedPlayers = [...players];
@@ -26,18 +84,55 @@ function MakeMatch() {
         setPlayers(updatedPlayers);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const matchData = {
-            matchID,
+            matchId,
             gameName,
             gameMode,
-            gameRound,
-            gameRoundLevel,
-            customRoomID,
-            selectedPlayers: players.filter(player => player.selected).map(player => player.pid),
+            GRLevel: Number(gameRoundLevel), // Cast gameRoundLevel to number if needed
+            currentMatchRound: Number(currentMatchRound), // Ensure it's a number
+            customId,
+            selectedPIds: players.filter(player => player.selected).map(player => player.PID),
         };
-        console.log(matchData);
+    
+        try {
+            const response = await fetch(makeMatchURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(matchData), // Convert matchData to a JSON string
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error:', errorData);
+                alert('Error making match: ' + errorData.message);
+            } else {
+                const result = await response.json();
+                console.log('Success:', result);
+                alert('Match successfully created!');
+            }
+        } catch (error) {
+            console.error('Error during the request:', error);
+            alert('An error occurred while making the match.');
+        }
     };
+    
+
+    // Create Game Round Level options based on maxGRLevel
+    const gameRoundLevelOptions = Array.from({ length: maxGRLevel }, (_, i) => (
+        <option key={i} value={i}>Level {i}</option>
+    ));
+
+    // Create Current Game Round options (fixed for 3 rounds)
+    const currentMatchRoundOptions = [
+        { value: 0, label: 'Round 1' },
+        { value: 1, label: 'Round 2' },
+        { value: 2, label: 'Round 3' }
+    ].map(option => (
+        <option key={option.value} value={option.value}>{option.label}</option>
+    ));
 
     return (
         <div>
@@ -47,40 +142,30 @@ function MakeMatch() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
                     <div>
                         <label className="text-sm font-semibold">Match ID</label>
-                        <input 
-                            type="text" 
-                            value={matchID} 
-                            disabled 
-                            className="w-full bg-gray-800 border border-gray-600 p-2 rounded text-yellow-400" 
+                        <input
+                            type="text"
+                            value={matchId}
+                            disabled
+                            className="w-full bg-gray-800 border border-gray-600 p-2 rounded text-yellow-400"
                         />
                     </div>
                     <div>
                         <label className="text-sm font-semibold">Game Name</label>
-                        <select 
-                            value={gameName} 
-                            onChange={(e) => setGameName(e.target.value)} 
+                        <select
+                            value={gameName}
+                            onChange={(e) => setGameName(e.target.value)}
                             className="w-full bg-gray-800 border border-gray-600 p-2 rounded"
                         >
                             <option value="" disabled>Select Game Name</option>
-                            <option value="FREE FIRE">FREE FIRE</option>
+                            <option value="FREEFIRE">FREE FIRE</option>
                             <option value="BGMI">BGMI</option>
                         </select>
                     </div>
                     <div>
-                        <label className="text-sm font-semibold">Current Game Round</label>
-                        <input 
-                            type="text" 
-                            value={gameRound} 
-                            onChange={(e) => setGameRound(e.target.value)} 
-                            placeholder="Current Game Round" 
-                            className="w-full bg-gray-800 border border-gray-600 p-2 rounded" 
-                        />
-                    </div>
-                    <div>
                         <label className="text-sm font-semibold">Game Mode</label>
-                        <select 
-                            value={gameMode} 
-                            onChange={(e) => setGameMode(e.target.value)} 
+                        <select
+                            value={gameMode}
+                            onChange={(e) => setGameMode(e.target.value)}
                             className="w-full bg-gray-800 border border-gray-600 p-2 rounded"
                         >
                             <option value="" disabled>Select Game Mode</option>
@@ -90,15 +175,25 @@ function MakeMatch() {
                         </select>
                     </div>
                     <div>
+                        <label className="text-sm font-semibold">Current Game Round</label>
+                        <select
+                            value={currentMatchRound}
+                            onChange={(e) => setcurrentMatchRound(e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 p-2 rounded"
+                        >
+                            <option value="" disabled>Select Current Game Round</option>
+                            {currentMatchRoundOptions}
+                        </select>
+                    </div>
+                    <div>
                         <label className="text-sm font-semibold">Game Round Level</label>
-                        <select 
-                            value={gameRoundLevel} 
-                            onChange={(e) => setGameRoundLevel(e.target.value)} 
+                        <select
+                            value={gameRoundLevel}
+                            onChange={(e) => setGameRoundLevel(e.target.value)}
                             className="w-full bg-gray-800 border border-gray-600 p-2 rounded"
                         >
                             <option value="" disabled>Select Game Round Level</option>
-                            <option value="1">Level 1</option>
-                            <option value="2">Level 2</option>
+                            {gameRoundLevelOptions}
                         </select>
                     </div>
                     <div className="col-span-2">
@@ -128,23 +223,29 @@ function MakeMatch() {
                             </tr>
                         </thead>
                         <tbody>
-                            {players.map((player, index) => (
-                                <tr key={index} className="text-center hover:bg-gray-700">
-                                    <td className="p-2 border border-gray-600">{index + 1}</td>
-                                    <td className="p-2 border border-gray-600">{player.pid}</td>
-                                    <td className="p-2 border border-gray-600">{player.name}</td>
-                                    <td className="p-2 border border-gray-600">{player.uid}</td>
-                                    <td className="p-2 border border-gray-600">{player.gameName}</td>
-                                    <td className="p-2 border border-gray-600">{player.contact}</td>
-                                    <td className="p-2 border border-gray-600">
-                                        <input
-                                            type="checkbox"
-                                            checked={player.selected || false}
-                                            onChange={() => handleSelectPlayer(index)}
-                                        />
-                                    </td>
+                            {players.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="text-center p-4">No players available</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                players.map((player, index) => (
+                                    <tr key={index} className="text-center hover:bg-gray-700">
+                                        <td className="p-2 border border-gray-600">{index + 1}</td>
+                                        <td className="p-2 border border-gray-600">{player.PID}</td>
+                                        <td className="p-2 border border-gray-600">{player.names}</td>
+                                        <td className="p-2 border border-gray-600">{player.uids}</td>
+                                        <td className="p-2 border border-gray-600">{player.gameName}</td>
+                                        <td className="p-2 border border-gray-600">{player.contacts}</td>
+                                        <td className="p-2 border border-gray-600">
+                                            <input
+                                                type="checkbox"
+                                                checked={player.selected || false}
+                                                onChange={() => handleSelectPlayer(index)}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -163,7 +264,7 @@ function MakeMatch() {
                     <label className="text-sm font-semibold">Custom Room ID</label>
                     <input
                         type="text"
-                        value={customRoomID}
+                        value={customId}
                         onChange={(e) => setCustomRoomID(e.target.value)}
                         className="w-full bg-gray-800 border border-gray-600 p-2 rounded"
                     />

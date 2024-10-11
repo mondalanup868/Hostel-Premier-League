@@ -1,25 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 
+const registerationDetailURL = `${process.env.REACT_APP_SERVER_URL}/users/user-getAll`;
+
 function RegistrationDetails() {
+    const [data, setData] = useState([]);
     const [selectedGameName, setSelectedGameName] = useState('');
     const [selectedGameMode, setSelectedGameMode] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(''); // Moved this line outside
+    const [loading, setLoading] = useState(true);
 
-    // Sample data (This should be fetched from an API or a state)
-    const data = [
-        {
-            pid: 'WERO9JRK',
-            gameName: 'FREE FIRE',
-            gameMode: 'SOLO',
-            teamName: 'THE ACE SQUAD',
-            players: [
-                { id: '394058473812', name: 'HITESH BHATT', email: 'ayushkothari147@gmail.com', contact: '6396979579' },
-            ],
-            transactionID: 'RTGF6396979579',
-        },
-        // Add more data as required...
-    ];
+    useEffect(() => {
+        // Fetch data from the backend when the component loads
+        const fetchData = async () => {
+            try {
+                const response = await fetch(registerationDetailURL, {
+                    method: 'POST', // Specify POST method
+                    headers: {
+                        'Content-Type': 'application/json', // Set content type as JSON
+                    },
+                    body: JSON.stringify({}), // Adjust body data if needed
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const usersData = await response.json();
+                setData(usersData); // Assuming the data from the backend is structured properly
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Filter the data based on selected game name, mode, and search term
+    const filteredData = data.filter((entry) => {
+        const matchesGameName = selectedGameName ? entry.gameName === selectedGameName : true;
+        const matchesGameMode = selectedGameMode ? entry.gameMode === selectedGameMode : true;
+        const matchesSearchTerm = searchTerm ? 
+        
+            entry.uidNames.some(name => name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+            entry.emails.some(email => email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            entry.contacts.some(contact => contact.includes(searchTerm)) : true; // Ensure matching by case-insensitive name/email/contact
+
+        return matchesGameName && matchesGameMode && matchesSearchTerm;
+    });
+
+    // Function to join player details
+    const getPlayerDetails = (entry) => {
+        const playerNames = entry.uidNames.join(', ');
+        const playerEmails = entry.emails.join(', ');
+        const playerContacts = entry.contacts.join(', ');
+
+        return {
+            names: playerNames,
+            emails: playerEmails,
+            contacts: playerContacts,
+        };
+    };
 
     return (
         <div>
@@ -36,7 +79,7 @@ function RegistrationDetails() {
                                 className="bg-gray-800 text-white border border-gray-600 p-2 rounded"
                             >
                                 <option value="">Choose Game Name</option>
-                                <option value="FREE FIRE">FREE FIRE</option>
+                                <option value="FREEFIRE">FREE FIRE</option>
                                 <option value="BGMI">BGMI</option>
                             </select>
                         </div>
@@ -80,7 +123,7 @@ function RegistrationDetails() {
                     </div>
                 </div>
 
-                {/* Data Table */}
+                {/* Table structure */}
                 <div className="overflow-auto">
                     <table className="min-w-full table-auto bg-gray-900 border border-gray-600">
                         <thead className="bg-gray-800">
@@ -91,44 +134,40 @@ function RegistrationDetails() {
                                 <th className="p-2 border border-gray-600">Game Mode</th>
                                 <th className="p-2 border border-gray-600">Team Name</th>
                                 <th className="p-2 border border-gray-600">Player Game ID</th>
-                                <th className="p-2 border border-gray-600">Player Name</th>
-                                <th className="p-2 border border-gray-600">Player Email</th>
-                                <th className="p-2 border border-gray-600">Player Contact</th>
+                                <th className="p-2 border border-gray-600">Player Name(s)</th>
+                                <th className="p-2 border border-gray-600">Player Email(s)</th>
+                                <th className="p-2 border border-gray-600">Player Contact(s)</th>
                                 <th className="p-2 border border-gray-600">Transaction ID</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((entry, index) => (
-                                <tr key={index} className="text-center">
-                                    <td className="p-2 border border-gray-600">{index + 1}</td>
-                                    <td className="p-2 border border-gray-600">{entry.pid}</td>
-                                    <td className="p-2 border border-gray-600">{entry.gameName}</td>
-                                    <td className="p-2 border border-gray-600">{entry.gameMode}</td>
-                                    <td className="p-2 border border-gray-600">{entry.teamName}</td>
-                                    {entry.players.map((player, idx) => (
-                                        <React.Fragment key={idx}>
-                                            <td className="p-2 border border-gray-600">{player.id}</td>
-                                            <td className="p-2 border border-gray-600">{player.name}</td>
-                                            <td className="p-2 border border-gray-600">{player.email}</td>
-                                            <td className="p-2 border border-gray-600">{player.contact}</td>
-                                        </React.Fragment>
-                                    ))}
-                                    <td className="p-2 border border-gray-600">{entry.transactionID}</td>
+                            {filteredData.length > 0 ? (
+                                filteredData.map((entry, index) => {
+                                    const { names, emails, contacts } = getPlayerDetails(entry);
+                                    return (
+                                        <tr key={index} className="text-center">
+                                            <td className="p-2 border border-gray-600">{index + 1}</td>
+                                            <td className="p-2 border border-gray-600">{entry.PID}</td>
+                                            <td className="p-2 border border-gray-600">{entry.gameName}</td>
+                                            <td className="p-2 border border-gray-600">{entry.gameMode}</td>
+                                            <td className="p-2 border border-gray-600">{entry.teamName}</td>
+                                            <td className="p-2 border border-gray-600">{entry.uids.join(', ')}</td>
+                                            <td className="p-2 border border-gray-600">{names}</td>
+                                            <td className="p-2 border border-gray-600">{emails}</td>
+                                            <td className="p-2 border border-gray-600">{contacts}</td>
+                                            <td className="p-2 border border-gray-600">{entry.transactionId}</td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td className="p-4 text-center text-gray-400" colSpan="10">
+                                        {selectedGameName || selectedGameMode ? 'No matching data found.' : 'Please select a game and mode to see the data.'}
+                                    </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex justify-center items-center mt-4 space-x-2">
-                    <button className="p-2 bg-gray-600 rounded hover:bg-gray-700">{'<'}</button>
-                    {[1, 2, 3, 4, 5, 6].map((page) => (
-                        <button key={page} className="p-2 bg-gray-600 rounded hover:bg-gray-700">
-                            {page}
-                        </button>
-                    ))}
-                    <button className="p-2 bg-gray-600 rounded hover:bg-gray-700">{'>'}</button>
                 </div>
             </div>
         </div>

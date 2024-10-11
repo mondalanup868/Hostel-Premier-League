@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './Navbar';
 
 const registerURL = `${process.env.REACT_APP_SERVER_URL}/users/user-register`;
@@ -28,36 +30,6 @@ function DuoFF() {
     }
   };
 
-  // Function to fetch the first player's game name based on UID
-  const fetchFirstPlayerGameName = async () => {
-    setLoading(true); // Start loading
-    try {
-      const response = await fetch(uidNameFetch + player1_UID, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const result = await response.json();
-
-      if (response.status === 200) {
-        let uidName = result.basicInfo.nickname;
-        console.log("uid name:", uidName)
-        setPlayer1_UID(uidName);
-        setError('');
-      } else {
-        setError(result.message || 'Failed to fetch UID name.');
-        console.error('Error fetching UID name:', result.message);
-      }
-    } catch (error) {
-      console.error('Error during UID fetch:', error);
-      setError('An error occurred while fetching UID name.');
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  };
-
   function generatePID() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let PID = '';
@@ -69,7 +41,11 @@ function DuoFF() {
 
   // Function to fetch the second player's game name based on UID
   const fetchSecondPlayerGameName = async () => {
-    setLoading(true); // Start loading
+    // setLoading(true); // Start loading
+    if (uid2Name === "null") {
+      toast.error('Please enter The second UID');
+      return;
+    }
     try {
       const response = await fetch(uidNameFetch + player2_UID, {
         method: 'GET',
@@ -79,30 +55,35 @@ function DuoFF() {
       });
 
       const result = await response.json();
-     
+
 
       if (response.status === 200) {
         let uid2Name = result.basicInfo.nickname;
-        console.log("Second player UID name: ",uid2Name);
+        console.log("Second player UID name: ", uid2Name);
         setPlayer2_UID(uid2Name);
         setError('');
+        toast.success('2nd Player UID name fetched successfully.')
       } else {
         setError(result.message || 'Failed to fetch UID name.');
-        console.error('Error fetching UID name:', result.message);
+        toast.error('Error fetching UID name:', result.message);
       }
     } catch (error) {
       console.error('Error during UID fetch:', error);
       setError('An error occurred while fetching UID name.');
     } finally {
-      setLoading(false); // Stop loading
+      setError('An error occurred while fetching 2nd player UID name.');
+      toast.error('An error occurred while fetching 2nd player UID name.');
     }
   };
 
   // Function to handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (transactionId !== confirmTransactionId) {
-      setError('Both Transaction IDs are not same. Please enter a valid ID.');
+      setError('Both Transaction IDs are not the same. Please enter a valid ID.');
+      toast.error('Both Transaction IDs are not the same.');
+      return;
     } else {
       setError('');
 
@@ -125,12 +106,12 @@ function DuoFF() {
           e.target.player2_contact.value,
         ],
         uids: [
-          e.target.player1_UID.value, 
-          e.target.player2_UID.value, 
+          e.target.player1_UID.value,
+          e.target.player2_UID.value,
         ],
         uidNames: [
-          uidName,
-          uid2Name,
+          e.target.player2_uidName.value,
+          e.target.player1_uidName.value,
         ],
         collegeNames: [
           e.target.player1_collegeName.value,
@@ -144,30 +125,39 @@ function DuoFF() {
         transactionMode: transactionMode,
       };
 
-      // Send data to backend
-      fetch(registerURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Success:', data);
-          // Optionally, redirect the user or display a success message
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          setError('Failed to register. Please try again.');
+      try {
+        // Send data to backend
+        const response = await fetch(registerURL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
         });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          toast.success("Registration successful!");
+
+          // Reset the form fields
+          e.target.reset();
+
+          // Reset state variables
+          setTransactionId("");
+          setConfirmTransactionId("");  // Also reset confirmTransactionId
+          setTransactionMode("");
+          setPlayer1_UID("");
+          setPlayer2_UID("");
+        } else {
+          toast.error(result.message || "Registration failed.");
+        }
+      } catch (error) {
+        toast.error("An error occurred during registration.");
+      }
     }
-  };
+  }
+
 
   return (
     <div>
@@ -175,7 +165,7 @@ function DuoFF() {
       <section className="md:p-10 p-4 flex justify-center items-center">
         <div className="w-full max-w-5xl px-4">
           <div className="space-y-6 ">
-            <h1 className='flex justify-center items-center font-bold text-4xl'>Duo Battle</h1>
+            <h1 className='flex justify-center items-center font-bold text-4xl'>DUO Battle</h1>
             <form className="space-y-6" onSubmit={handleSubmit}>
               {/* Team name */}
               <div className="col-span-1 w-full">
@@ -195,7 +185,7 @@ function DuoFF() {
                   type="text"
                   name="gameName"
                   className="bg-blue-50 border border-blue-300 text-green-500 text-sm rounded-lg w-full p-2.5"
-                  value="Free Fire"
+                  value="FREEFIRE"
                   readOnly
                 />
               </div>
@@ -206,7 +196,7 @@ function DuoFF() {
                   type="text"
                   name="gameMode"
                   className="bg-blue-50 border border-blue-300 text-green-500 text-sm rounded-lg w-full p-2.5"
-                  value="Duo"
+                  value="DUO"
                   readOnly
                 />
               </div>
@@ -256,14 +246,11 @@ function DuoFF() {
                       <input
                         type="text"
                         name="player1_UID"
-                        onChange={(e) => setFirstPlayerUID(e.target.value)}
                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                         placeholder="Enter your UID"
                         required
                       />
-                      <button type="button" onClick={fetchFirstPlayerGameName} className="ml-2 bg-purple-600 text-white font-medium rounded-lg px-4 py-2 text-sm">
-                        Fetch Game Name
-                      </button>
+                      
                     </div>
 
                     {/* Player Game Name */}
@@ -274,8 +261,7 @@ function DuoFF() {
                         name="player1_uidName"
                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                         placeholder="Your game name is..."
-                        value={uidName}
-                        readOnly
+                        required
                       />
                     </div>
 
@@ -349,19 +335,17 @@ function DuoFF() {
                     {/* Player UID */}
                     <div className="col-span-1 w-full">
                       <label className="block mb-2 text-sm font-medium text-gray-900">Second Player UID:</label>
+
                       <input
                         type="text"
                         name="player2_UID"
-                        onChange={(e) => setSecondPlayerUID(e.target.value)}
                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                         placeholder="Enter your UID"
                         required
                       />
-                      <button type="button" onClick={fetchSecondPlayerGameName} className="ml-2 bg-purple-600 text-white font-medium rounded-lg px-4 py-2 text-sm">
-                        Fetch Game Name
-                      </button>
+                   
 
-                      
+
                     </div>
 
                     {/* Player Game Name */}
@@ -372,8 +356,7 @@ function DuoFF() {
                         name="player2_uidName"
                         className="bg-blue-50 border border-blue-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
                         placeholder="Your game name is..."
-                        value={uid2Name}
-                        readOnly
+                        required
                       />
                     </div>
 
@@ -449,7 +432,7 @@ function DuoFF() {
                 />
               </div>
 
-              
+
 
               {/* Error Message */}
               {error && <div className="text-red-600">{error}</div>}
@@ -459,12 +442,13 @@ function DuoFF() {
                 type="submit"
                 className="flex justify-center items-center w-full text-white font-medium rounded-lg px-5 py-3 text-center text-2xl bg-purple-700 hover:bg-purple-900"
               >
-                {loading ? 'Submitting...' : 'Register Duo'}
+                {loading ? 'Submitting...' : 'Register DUO'}
               </button>
             </form>
           </div>
         </div>
       </section>
+      <ToastContainer />
     </div>
   );
 }
