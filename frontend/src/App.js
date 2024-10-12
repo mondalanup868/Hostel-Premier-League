@@ -15,6 +15,8 @@ import SoloBGMI from './components/SoloBGMI';
 import DuoBGMI from './components/DuoBGMI';
 import SquadBGMI from './components/SquadBGMI';
 import CheatReport from './components/CheatReport';
+import PlayerSelectionTable from './components/PlayerSelectionTable';
+import Winners from './components/Winners';
 
 
 function App() {
@@ -34,7 +36,9 @@ function App() {
         <Route path="/home/reg-details" element={<RegistrationDetails/>} />
         <Route path="/home/make-match" element={<MakeMatch/>} />
         <Route path="/home/view-match-details" element={<ViewMatchDetails/>} />
+        <Route path="/home/view-match-details/player-selection" element={<PlayerSelectionTable/>} />
         <Route path="/home/cheat-report" element={<CheatReport/>} />
+        <Route path="/home/cheat-winners" element={<Winners/>} />
       </Routes>
     </Router>
   );

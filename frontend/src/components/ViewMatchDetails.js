@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Navbar from './Navbar';
+import { Link } from 'react-router-dom';
 
 function ViewMatchDetails() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -27,7 +28,7 @@ function ViewMatchDetails() {
 
     return (
         <div>
-            <Navbar/>
+            <Navbar />
             <div className="min-h-screen bg-gray-600 text-white p-4">
                 {/* Dropdown Filters */}
                 <div className="flex justify-around mb-4">
@@ -52,21 +53,25 @@ function ViewMatchDetails() {
                 </div>
 
                 {/* Table */}
-                <table className="table-auto w-full text-left border-collapse border border-gray-400">
-                    <thead>
+                <table className="table-auto w-full border-collapse border border-gray-400 ">
+                    <thead >
                         <tr>
-                            <th className="border p-2">S.NO</th>
-                            <th className="border p-2">Match ID</th>
-                            <th className="border p-2">Total Player</th>
-                            <th className="border p-2">Custom ID</th>
-                            <th className="border p-2">Match Status</th>
+                            <th className="border p-2 ">S.NO</th>
+                            <th className="border p-2 ">Match ID</th>
+                            <th className="border p-2 ">Total Player</th>
+                            <th className="border p-2 ">Custom ID</th>
+                            <th className="border p-2 ">Match Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {paginatedData.map((row, index) => (
                             <tr key={index} className="text-center">
                                 <td className="border p-2">{startRow + index + 1}</td>
-                                <td className="border p-2 text-blue-500">{row.matchId}</td>
+                                <td className="border p-2 text-blue-500 hover:underline">
+                                    <Link to='/home/view-match-details/player-selection'>
+                                        {row.matchId}
+                                    </Link>
+                                </td>
                                 <td className="border p-2">{row.totalPlayer}</td>
                                 <td className="border p-2">{row.customId}</td>
                                 <td className="border p-2">

@@ -121,7 +121,7 @@ function MakeMatch() {
     
 
     // Create Game Round Level options based on maxGRLevel
-    const gameRoundLevelOptions = Array.from({ length: maxGRLevel }, (_, i) => (
+    const gameRoundLevelOptions = Array.from({ length: maxGRLevel + 1 }, (_, i) => (
         <option key={i} value={i}>Level {i}</option>
     ));
 
@@ -234,7 +234,7 @@ function MakeMatch() {
                                         <td className="p-2 border border-gray-600">{player.PID}</td>
                                         <td className="p-2 border border-gray-600">{player.names}</td>
                                         <td className="p-2 border border-gray-600">{player.uids}</td>
-                                        <td className="p-2 border border-gray-600">{player.gameName}</td>
+                                        <td className="p-2 border border-gray-600">{player.uidNames}</td>
                                         <td className="p-2 border border-gray-600">{player.contacts}</td>
                                         <td className="p-2 border border-gray-600">
                                             <input

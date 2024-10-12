@@ -41,7 +41,7 @@ function Navbar() {
 
   return (
     <div>
-      <nav className="bg-gray-50 dark:bg-gray-700">
+      <nav className="bg-gray-700">
         <div className="max-w-screen-xl px-4 py-3 mx-auto flex justify-between text-white">
           <div className="flex justify-center items-center font-bold text-4xl">PVS</div>
           <div className="flex justify-evenly gap-10 items-center">
@@ -60,7 +60,7 @@ function Navbar() {
             <Link to="/home/cheat-report">
               <div>Cheat Report</div>
             </Link>
-            <Link to="">
+            <Link to="/home/cheat-winners">
               <div>Winners</div>
             </Link>
           </div>
