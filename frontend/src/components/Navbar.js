@@ -1,11 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import DP from '../assets/dp.jpeg';
 
 function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [adminDetails, setAdminDetails] = useState({
+    adminId: localStorage.getItem('adminId'),
+    name: localStorage.getItem('name'),
+    email: localStorage.getItem('email'),
+    contact: localStorage.getItem('contact')
+  });
+
   const dropdownRef = useRef(null);
-  const navigate = useNavigate(); // Hook to navigate programmatically
+  const navigate = useNavigate();
+  const location = useLocation(); // Get current path to manage active link
+
+  // Fetch admin details from localStorage when component mounts
+  useEffect(() => {
+    const adminData = JSON.parse(localStorage.getItem('admin'));
+    if (adminData) {
+      setAdminDetails(adminData); // Set the admin details to state
+    }
+  }, []);
 
   // Toggle dropdown on profile picture click
   const handleProfileClick = () => {
@@ -29,39 +45,37 @@ function Navbar() {
 
   // Handle logout function
   const handleLogout = () => {
-    // Clear all data from localStorage
-    localStorage.clear(); // This clears all localStorage data, not just 'authToken'
-  
-    // Optionally clear sessionStorage if you are using it as well
-    sessionStorage.clear(); 
-  
-    // Redirect to the login page or any desired route
+    localStorage.clear();
+    sessionStorage.clear();
     navigate('/');
   };
+
+  // Function to check if the link is active
+  const isActiveLink = (path) => location.pathname === path;
 
   return (
     <div>
       <nav className="bg-gray-700">
-        <div className="max-w-screen-xl px-4 py-3 mx-auto flex justify-between text-white">
+        <div className="max-w-screen-xl px-4 py-3 mx-auto flex flex-wrap justify-between items-center text-white">
           <div className="flex justify-center items-center font-bold text-4xl">PVS</div>
-          <div className="flex justify-evenly gap-10 items-center">
+          <div className="flex flex-wrap justify-evenly gap-4 sm:gap-6 md:gap-10 items-center">
             <Link to="/home">
-              <div>Registration Form</div>
+              <div className={`${isActiveLink('/home') ? 'underline' : ''}`}>Registration Form</div>
             </Link>
             <Link to="/home/reg-details">
-              <div>Registration Details</div>
+              <div className={`${isActiveLink('/home/reg-details') ? 'underline' : ''}`}>Registration Details</div>
             </Link>
             <Link to="/home/make-match">
-              <div>Make Match</div>
+              <div className={`${isActiveLink('/home/make-match') ? 'underline' : ''}`}>Make Match</div>
             </Link>
             <Link to="/home/view-match-details">
-              <div>View Match Details</div>
+              <div className={`${isActiveLink('/home/view-match-details') ? 'underline' : ''}`}>View Match Details</div>
             </Link>
             <Link to="/home/cheat-report">
-              <div>Cheat Report</div>
+              <div className={`${isActiveLink('/home/cheat-report') ? 'underline' : ''}`}>Cheat Report</div>
             </Link>
             <Link to="/home/cheat-winners">
-              <div>Winners</div>
+              <div className={`${isActiveLink('/home/cheat-winners') ? 'underline' : ''}`}>Winners</div>
             </Link>
           </div>
           <div className="relative" ref={dropdownRef}>
@@ -76,14 +90,14 @@ function Navbar() {
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-lg py-2 z-20">
                 <div className="px-4 py-2 text-black">
-                  <p className="">Name: Anup Mondal</p>
-                  <p className="">Position: Admin</p>
-
+                  <p>Name: {adminDetails.name || 'NA'}</p>
+                  <p>Email: {adminDetails.email || 'NA'}</p>
+                  <p>Contact: {adminDetails.contact || 'NA'}</p>
                 </div>
                 <div className="px-4 py-2">
                   <button
                     onClick={handleLogout}
-                    className="text-black font-bold text-xl w-full text-lcenter bg-red-300 p-2 rounded  hover:bg-red-500  hover:text-white items-center"
+                    className="text-black font-bold text-xl w-full text-center bg-red-300 p-2 rounded hover:bg-red-500 hover:text-white items-center"
                   >
                     Logout
                   </button>
