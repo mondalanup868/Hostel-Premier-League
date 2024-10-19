@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 
 const registerationDetailURL = `${process.env.REACT_APP_SERVER_URL}/users/user-getAll`;
+const updateURL = `${process.env.REACT_APP_SERVER_URL}/users/user-update`;
 
 function RegistrationDetails() {
     const [data, setData] = useState([]);
@@ -52,7 +53,7 @@ function RegistrationDetails() {
         }));
     };
 
-    const handleSaveClick = (index) => {
+    const handleSaveClick = async (index) => {
         const updatedData = [...data];
         const updatedRow = {
             ...editedRowData,
@@ -61,13 +62,43 @@ function RegistrationDetails() {
             emails: editedRowData.emails.split(',').map((email) => email.trim()),
             contacts: editedRowData.contacts.split(',').map((contact) => contact.trim()),
         };
+    
         updatedData[index] = updatedRow;
         setData(updatedData);
         setEditingRowIndex(null);
-
-        // Optionally, you can send the updatedRow to the server to persist the changes
-        // Example: await fetch(`${registerationDetailURL}/update`, { method: 'POST', body: JSON.stringify(updatedRow) });
+    
+        try {
+            // Send the updated row data to the backend
+            const response = await fetch(updateURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    PID: updatedRow.PID,
+                    gameName: updatedRow.gameName,
+                    gameMode: updatedRow.gameMode,
+                    teamName: updatedRow.teamName,
+                    names: updatedRow.uidNames,
+                    emails: updatedRow.emails,
+                    contacts: updatedRow.contacts,
+                    uids: updatedRow.uids,
+                    uidNames: updatedRow.uidNames,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to update user');
+            }
+    
+            const result = await response.json();
+            console.log('Update successful:', result);
+    
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
     };
+    
 
     const filteredData = data.filter((entry) => {
         const matchesGameName = selectedGameName ? entry.gameName === selectedGameName : true;

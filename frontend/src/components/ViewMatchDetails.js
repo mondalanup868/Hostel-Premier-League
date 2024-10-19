@@ -12,6 +12,7 @@ function ViewMatchDetails() {
     const [gameName, setGameName] = useState('');
     const [gameMode, setGameMode] = useState('');
     const [GRLevel, setGRLevel] = useState('');
+    const [currentMatchRound, setCurrentMatchRound] = useState('');
     const [loading, setLoading] = useState(false);
     const [maxGRLevel, setMaxGRLevel] = useState(1); // State for max GRLevel
 
@@ -22,19 +23,40 @@ function ViewMatchDetails() {
     // Fetch the max GRLevel from backend
     const fetchMaxGRLevel = async () => {
         try {
-            const response = await fetch(maxLevelFetch);
+            // Making the POST request using fetch
+            const response = await fetch(maxLevelFetch, {
+                method: 'POST', // Specify POST method
+                headers: {
+                    'Content-Type': 'application/json', // Specify JSON format
+                },
+                // If needed, send data in the request body
+                body: JSON.stringify({
+                    gameName: gameName || undefined, // Send gameName if defined
+                    gameMode: gameMode || undefined, // Send gameMode if defined
+                }),
+            });
+
+            // Parse the response into JSON format
             const result = await response.json();
+
+            console.log("Max GR level:", result)
+
+            // Check if the result is successful
             if (result.success) {
-                setMaxGRLevel(result.maxGRLevel); // Set the max GRLevel from the response
+                console.log("Max GR level:", result);
+                // Set the max GRLevel from the response
+                setMaxGRLevel(result.maxGRLevel);
             }
         } catch (err) {
+            // Handle any errors during the request
             console.error('Error fetching max GRLevel:', err);
         }
     };
 
+
     // Fetch matches data from backend based on filter criteria
     const fetchMatches = async () => {
-        setLoading(true);
+        setLoading(true); // Enable loading state when fetching starts
         try {
             const response = await fetch(matchesDetail, {
                 method: 'POST',
@@ -42,13 +64,14 @@ function ViewMatchDetails() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    gameName: gameName || undefined,
-                    gameMode: gameMode || undefined,
-                    GRLevel: GRLevel || undefined,
-                    currentMatchRound: GRLevel ? Number(GRLevel.replace('Level ', '')) : undefined,
+                    gameName: gameName || undefined,      // Send gameName
+                    gameMode: gameMode || undefined,      // Send gameMode
+                    GRLevel: GRLevel || undefined,        // Send GRLevel
+                    currentMatchRound: currentMatchRound || undefined, // Send currentMatchRound (newly added)
                 }),
             });
             const result = await response.json();
+           
             if (result.success) {
                 setData(result.match);
             } else {
@@ -58,7 +81,7 @@ function ViewMatchDetails() {
             console.error('Error fetching matches:', err);
             setData([]);
         }
-        setLoading(false);
+        setLoading(false); // Disable loading state when done
     };
 
     // Handle page change for pagination
@@ -68,7 +91,7 @@ function ViewMatchDetails() {
     // Fetch matches when any of the filter values change
     useEffect(() => {
         fetchMatches();
-    }, [gameName, gameMode, GRLevel]);
+    }, [gameName, gameMode, GRLevel,currentMatchRound]);
 
     // Fetch max GRLevel when component mounts
     useEffect(() => {
@@ -114,6 +137,19 @@ function ViewMatchDetails() {
 
                     <select
                         className="p-2 border rounded bg-gray-600"
+                        value={currentMatchRound}
+                        onChange={(e) => setCurrentMatchRound(e.target.value)}
+                    >
+                        <option value="">Select Current Match Round</option>
+                        {[1, 2, 3].map((level) => (
+                            <option key={level} value={level}>
+                                Level {level}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select
+                        className="p-2 border rounded bg-gray-600"
                         value={GRLevel}
                         onChange={(e) => setGRLevel(e.target.value)}
                     >
@@ -149,13 +185,13 @@ function ViewMatchDetails() {
                                             <td className="border p-2">{startRow + index + 1}</td>
                                             <td className="border p-2 text-blue-500 hover:underline">
                                                 <Link
-                                                onClick={() => localStorage.setItem('matchId', row.matchId)}
+                                                    onClick={() => localStorage.setItem('matchId', row.matchId)}
                                                     to={{
-                                                        
+
                                                         pathname: '/home/view-match-details/player-selection',
                                                         state: { matchId: row.matchId }
                                                     }}
-                                                    
+
                                                 >
                                                     {row.matchId}
                                                 </Link>

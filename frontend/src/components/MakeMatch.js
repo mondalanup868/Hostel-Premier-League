@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
+import {toast} from  'react-toastify';
+import { ToastContainer } from 'react-toastify';
 
 const maxLevelFetch = `${process.env.REACT_APP_SERVER_URL}/matches/getMaxGRLevel`;
 const remainingURL = `${process.env.REACT_APP_SERVER_URL}/matches/getRemaining`;
@@ -106,17 +108,22 @@ function MakeMatch() {
     
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Error:', errorData);
-                alert('Error making match: ' + errorData.message);
+                // console.error('Error:', errorData);
+                toast.error('Error making match: ' + errorData.message);
             } else {
                 const result = await response.json();
-                console.log('Success:', result);
-                alert('Match successfully created!');
+                // console.log('Success:', result);
+                toast.success('Match successfully created!');
+                
             }
         } catch (error) {
-            console.error('Error during the request:', error);
-            alert('An error occurred while making the match.');
+            // console.error('Error during the request:', error);
+            toast.alert('An error occurred while making the match.');
+           
         }
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000); // Refresh after 2 seconds
     };
     
 
@@ -272,10 +279,12 @@ function MakeMatch() {
 
                 {/* Submit Button */}
                 <div>
-                    <button onClick={handleSubmit} className="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded">
+                    <button 
+                    onClick={handleSubmit} className="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded">
                         Make Match
                     </button>
                 </div>
+            <ToastContainer/>
             </div>
         </div>
     );
